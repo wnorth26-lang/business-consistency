@@ -1,0 +1,9 @@
+invariants:
+  - name: paid_customer_has_access
+    given:
+      path: stripe.subscription.status
+      equals: active
+    must_be_true:
+      path: product.entitlement.plan
+      equals: pro
+

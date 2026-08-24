@@ -1,0 +1,51 @@
+{
+  "name": "business-consistency",
+  "version": "0.1.0",
+  "description": "Verify business invariants across live system state.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Agent Evidence Labs",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wnorth26-lang/business-consistency.git"
+  },
+  "homepage": "https://www.agentevidencelabs.com/#product",
+  "bugs": "https://github.com/wnorth26-lang/business-consistency/issues",
+  "keywords": [
+    "business-consistency",
+    "invariants",
+    "observability",
+    "verification",
+    "data-consistency"
+  ],
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js"
+    }
+  },
+  "types": "./src/index.d.ts",
+  "bin": {
+    "business-consistency": "./src/cli.js"
+  },
+  "files": [
+    "src/index.js",
+    "src/index.d.ts",
+    "src/cli.js",
+    "examples/billing.yaml",
+    "examples/state.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test",
+    "check": "node --check src/index.js && node --check src/cli.js",
+    "example": "node src/cli.js --config examples/billing.yaml --state examples/state.json --json"
+  },
+  "dependencies": {
+    "yaml": "^2.8.1"
+  }
+}

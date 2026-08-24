@@ -15,15 +15,13 @@ subscription = ACTIVE    ✕     plan = FREE
              cus_123
 ```
 
-Your services can be healthy, your jobs can be running, and your data can still describe an impossible business state.
+Your services can be healthy, your jobs can be running, and your data can still describe an impossible business state. **Business Consistency is a deterministic, read-only verification layer for that gap.**
 
-**Business Consistency is a read-only verification layer for that gap.**
+> **Status:** experimental validation release. Local snapshot evaluation and both CLIs work today. Live connectors and hosted monitoring are not included yet.
 
-It is being built to connect to systems that hold business truth, evaluate simple cross-system invariants, and report evidence when those invariants stop holding.
+## Try the Python CLI
 
-## 30-second demo
-
-The validation demo uses local snapshots, so you need **no Stripe account, database, API keys, collector, or telemetry stack**.
+The demo uses local snapshots, so you need no Stripe account, database, API keys, collector or telemetry stack.
 
 ```bash
 git clone https://github.com/wnorth26-lang/business-consistency.git
@@ -38,20 +36,41 @@ consistency check \
   --source product_db=examples/stripe-postgres/product_db.json
 ```
 
-Expected output:
+## Try the Node.js and TypeScript package
 
-```text
-✕ 1 consistency violation(s) found
+Until the first npm release is published, install directly from GitHub:
 
-  paid_customer_has_access
-  entity:   cus_123
-  source:   product_db
-  field:    user.plan
-  expected: pro
-  observed: free
+```bash
+npm install --save-dev github:wnorth26-lang/business-consistency
 ```
 
+Node.js 20 or newer is required.
+
+```bash
+npx business-consistency \
+  --config examples/billing.yaml \
+  --state examples/state.json
+```
+
+Use `--json` for machine-readable evidence. Exit code `0` means all applicable invariants passed, `1` means at least one violation was found, and `2` means the input or configuration was invalid.
+
+```ts
+import { defineInvariant, evaluateInvariant } from "business-consistency";
+
+const invariant = defineInvariant({
+  name: "paid_customer_has_access",
+  given: (state) => state.stripe.subscription.status === "active",
+  mustBeTrue: (state) => state.product.entitlement.plan === "pro",
+});
+
+const result = evaluateInvariant(invariant, state);
+```
+
+The JavaScript/TypeScript evaluator also accepts YAML conditions using `equals`, `not_equals`, `includes` and `exists`.
+
 ## Define business state, not workflow sequences
+
+Python CLI configuration names source snapshots explicitly:
 
 ```yaml
 invariants:
@@ -65,13 +84,22 @@ invariants:
       - source: product_db
         field: user.plan
         equals: pro
-    tolerance:
-      duration: 5m
 ```
 
-> **Given what is true in one system, what must be true in the other systems?**
+The Node.js CLI accepts a combined state snapshot:
 
-`tolerance` is part of the intended live-monitoring contract; the fixture engine does not enforce time windows yet.
+```yaml
+invariants:
+  - name: paid_customer_has_access
+    given:
+      path: stripe.subscription.status
+      equals: active
+    must_be_true:
+      path: product.entitlement.plan
+      equals: pro
+```
+
+Both answer the same question: **given what is true in one system, what must be true in the other systems?**
 
 ## Where the product boundary sits
 
@@ -81,18 +109,13 @@ invariants:
 | Workflow observability | Did the expected sequence of events complete? |
 | Data quality | Is this dataset valid? |
 | Sync / ETL | Did data move? |
-| Reconciliation | Do records/transactions match? |
+| Reconciliation | Do records or transactions match? |
 | **Business Consistency** | **Do systems of record agree with the business invariant?** |
 
-**Not workflow observability.** The core model inspects state; it does not require a prescribed emitted-event sequence.
-
-**Not synchronization.** Verification is read-only. We do not repair or overwrite source systems.
-
-**Not a data-quality framework.** An invariant can span unrelated APIs, SaaS products, and databases.
-
-**Not a general-purpose rules language.** The DSL is intentionally constrained.
-
-**Not financial reconciliation software.** Billing is the Hello World example, not the category.
+- **Not workflow observability.** The core model inspects state; it does not require a prescribed event sequence.
+- **Not synchronization.** Verification is read-only; it does not repair or overwrite source systems.
+- **Not a data-quality framework.** An invariant can span unrelated APIs, SaaS products and databases.
+- **Not financial reconciliation software.** Billing is the first example, not the entire category.
 
 ## Example hypotheses
 
@@ -112,26 +135,27 @@ HR says terminated     → Account access must be revoked
 
 These are validation hypotheses, not claims of supported live integrations today.
 
-## Status: experimental validation release
+## Works now
 
-### Works now
-- [x] constrained YAML invariant format
+- [x] constrained YAML invariant formats
 - [x] current-state evaluation
 - [x] local JSON snapshots
 - [x] human-readable and JSON output
-- [x] two domain examples
+- [x] Python CLI
+- [x] Node.js CLI and typed JavaScript API
 - [x] automated tests and CI
 
-### Build only if demand appears
+## Build only if demand appears
+
 - [ ] live Stripe connector
 - [ ] PostgreSQL connector
 - [ ] generic REST connector
 - [ ] entity matching across systems
-- [ ] tolerance/time-window enforcement
+- [ ] tolerance and time-window enforcement
 - [ ] scheduled checks and alerts
-- [ ] invariant templates
-- [ ] evidence/history
+- [ ] evidence history
 - [ ] hosted monitoring
+- [ ] API and MCP interfaces
 
 ## Read-only by design
 
@@ -144,33 +168,35 @@ System C ──┘
              mutate state
 ```
 
-Live connectors should request the narrowest practical read-only permissions.
-
-## Machine-readable output
-
-`consistency check ... --json` exposes the same primitive to CI, automation, APIs and, if demand develops, MCP/agent use.
+The open-source engines evaluate state supplied by the caller. They do not store credentials, modify source records or transmit telemetry. Live connectors should request the narrowest practical read-only permissions.
 
 ## Help determine what gets built
 
-This repository is a market test. If you need another system, open a **Connector Request** and describe the actual invariant. If systems have genuinely disagreed in production, open a **Real-world consistency failure** issue.
+This repository is a market test. If you need another system, open a **Connector Request** and describe the actual invariant. If systems have genuinely disagreed in production, open a **Real-world consistency failure** issue. Those signals matter more than stars.
 
-**Those signals matter more than stars.**
+The open-source engine should remain useful locally. A hosted product is justified only if users ask for continuous checks, managed credentials, alerting, evidence history, collaboration or higher-frequency monitoring.
 
-## Commercial hypothesis
+## Development
 
-The open-source engine should remain useful locally. A hosted product is justified only if users ask for continuous checks, managed credentials, alerting, history/evidence, collaboration, or higher-frequency monitoring.
+```bash
+# Python
+pip install -e . pytest
+pytest -q
 
-## Contributing
+# Node.js
+pnpm install
+pnpm run check
+pnpm test
+pnpm run example
+```
 
-The most useful contributions now are real failure cases, connector requests, reproducible bugs, and small improvements. See [CONTRIBUTING.md](CONTRIBUTING.md).
+## Contributing and security
 
-## Security
-
-Never put production credentials or customer data in public issues. See [SECURITY.md](SECURITY.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. Never put production credentials or customer data in public issues; see [SECURITY.md](SECURITY.md).
 
 ## License
 
-MIT for the validation experiment.
+MIT © Agent Evidence Labs and Business Consistency contributors.
 
 ---
 

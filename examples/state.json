@@ -1,0 +1,14 @@
+{
+  "entity": "cus_Q41mLp",
+  "stripe": {
+    "subscription": {
+      "status": "active"
+    }
+  },
+  "product": {
+    "entitlement": {
+      "plan": "free"
+    }
+  }
+}
+
