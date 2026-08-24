@@ -4,15 +4,20 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "business-consistency"
-version = "0.1.0"
+version = "0.2.0"
 description = "Business invariants as code — detect when your systems silently disagree."
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
 dependencies = ["PyYAML>=6.0"]
 
+[project.optional-dependencies]
+api = ["fastapi>=0.115,<1", "uvicorn[standard]>=0.30,<1"]
+test = ["pytest>=8", "httpx>=0.27,<1"]
+
 [project.scripts]
 consistency = "business_consistency.cli:main"
+consistency-api = "business_consistency.api:run"
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

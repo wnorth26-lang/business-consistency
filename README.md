@@ -144,6 +144,8 @@ These are validation hypotheses, not claims of supported live integrations today
 - [x] Python CLI
 - [x] Node.js CLI and typed JavaScript API
 - [x] automated tests and CI
+- [x] stateless HTTP API with OpenAPI documentation
+- [x] generic, batch and four opinionated business-state checks
 
 ## Build only if demand appears
 
@@ -155,7 +157,41 @@ These are validation hypotheses, not claims of supported live integrations today
 - [ ] scheduled checks and alerts
 - [ ] evidence history
 - [ ] hosted monitoring
-- [ ] API and MCP interfaces
+- [ ] MCP interface
+
+## Run the HTTP API
+
+The API follows the same versioned route and validation conventions as the existing Agent Evidence Labs catalogue. It accepts state supplied by the caller and does not store credentials or mutate source systems.
+
+```bash
+pip install -e ".[api]"
+consistency-api
+```
+
+Open `http://localhost:8000/docs` for interactive OpenAPI documentation.
+
+| Route | Purpose |
+|---|---|
+| `POST /v1/verify` | Evaluate one custom invariant |
+| `POST /v1/verify-batch` | Evaluate up to 100 custom invariants |
+| `POST /v1/check/subscription-access` | Billing status versus product access |
+| `POST /v1/check/order-fulfilment` | Commerce status versus shipment state |
+| `POST /v1/check/crm-billing` | Closed-won CRM account versus billing customer |
+| `POST /v1/check/employee-offboarding` | HR termination versus active account access |
+
+Example:
+
+```bash
+curl -X POST http://localhost:8000/v1/check/subscription-access \
+  -H "content-type: application/json" \
+  -d '{
+    "customer_id": "cus_123",
+    "billing_status": "active",
+    "access_plan": "free"
+  }'
+```
+
+The result is `consistent`, `violation`, or `not_applicable`, with deterministic evidence and a UTC check time. Marketplace authentication and metering belong at the hosting gateway; validation and internal failures must not be charged.
 
 ## Read-only by design
 
