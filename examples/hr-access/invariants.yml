@@ -1,0 +1,11 @@
+invariants:
+  - name: terminated_employee_has_no_github_access
+    entity: employee_42
+    given:
+      - source: hr
+        field: employee.status
+        equals: terminated
+    must_be_true:
+      - source: github
+        field: user.active
+        equals: false
