@@ -1,0 +1,14 @@
+invariants:
+  - name: paid_customer_has_access
+    entity: cus_123
+    severity: high
+    given:
+      - source: stripe
+        field: subscription.status
+        equals: active
+    must_be_true:
+      - source: product_db
+        field: user.plan
+        equals: pro
+    tolerance:
+      duration: 5m
