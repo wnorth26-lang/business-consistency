@@ -1,0 +1,35 @@
+name: Connector request
+description: Request a system needed for a real cross-system invariant
+title: "[Connector]: "
+labels: ["connector", "market-signal"]
+body:
+  - type: input
+    id: system
+    attributes: {label: "System/API", placeholder: "Shopify, HubSpot, NetSuite..."}
+    validations: {required: true}
+  - type: textarea
+    id: invariant
+    attributes:
+      label: "What must be true across this system and another system?"
+      description: "Describe the business fact, not just the integration."
+    validations: {required: true}
+  - type: textarea
+    id: systems
+    attributes: {label: "Which other system(s) hold the related state?"}
+    validations: {required: true}
+  - type: textarea
+    id: current
+    attributes: {label: "How do you detect this mismatch today?"}
+    validations: {required: true}
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: "How often would you want it checked?"
+      options: ["One-off", "Monthly", "Weekly", "Daily", "Hourly", "Near real-time"]
+    validations: {required: true}
+  - type: dropdown
+    id: hosted
+    attributes:
+      label: "Would continuous hosted monitoring be useful?"
+      options: ["Yes", "Maybe", "No"]
+    validations: {required: true}
